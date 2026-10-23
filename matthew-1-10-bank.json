@@ -1358,7 +1358,7 @@
   "ref": "Matthew 3:17",
   "type": "Direct",
   "text": "A VOICE FROM HEAVEN",
-  "question": "Who said, “This is my son, whom I love; with him I am well pleased?”",
+  "question": "Who said, “This is my Son, whom I love; with him I am well pleased”?",
   "answer": "A VOICE FROM HEAVEN"
  },
  {
@@ -4577,7 +4577,7 @@
   "ref": "Matthew 7:22",
   "type": "Direct",
   "text": "MANY",
-  "question": "Who will say on that day, “Lord, Lord, did we not prophesy in your name and in your name drive out demons and in your name perform many miracles?”",
+  "question": "Who will say on that day, “Lord, Lord, did we not prophesy in your name and in your name drive out demons and in your name perform many miracles”?",
   "answer": "MANY"
  },
  {
@@ -5383,12 +5383,12 @@
   "id": 656,
   "ref": "Matthew 8:25-26",
   "type": "MultiPart",
-  "text": "JESUS; THE DISCIPLES; LORD, SAVE US! WE'RE GOING TO DROWN!\"",
+  "text": "JESUS; THE DISCIPLES; LORD, SAVE US! WE'RE GOING TO DROWN!",
   "question": "Situation: Who said it, to whom, preceding statement? \"You of little faith, why are you so afraid?\"",
   "answers": [
    "JESUS",
    "THE DISCIPLES",
-   "LORD, SAVE US! WE'RE GOING TO DROWN!\""
+   "LORD, SAVE US! WE'RE GOING TO DROWN!"
   ]
  },
  {
@@ -6281,7 +6281,7 @@
   "ref": "Matthew 9:21-22",
   "type": "MultiPart",
   "text": "THE WOMAN WHO HAD BEEN SUBJECT TO BLEEDING FOR TWELVE YEARS; JESUS; TAKE HEART, DAUGHTER, YOUR FAITH HAS HEALED YOU",
-  "question": "Situation: Who said it, about whom, reply? “If I only touch his cloak, I will be healed.\"",
+  "question": "Situation: Who said it, about whom, reply? “If I only touch his cloak, I will be healed.”",
   "answers": [
    "THE WOMAN WHO HAD BEEN SUBJECT TO BLEEDING FOR TWELVE YEARS",
    "JESUS",
@@ -6324,7 +6324,7 @@
   "id": 767,
   "ref": "Matthew 9:24",
   "type": "MultiPart",
-  "text": "JESUS; THE RULER'S DAUGHTER WHO HAD JUST DIED;THE CROWD LAUGHED AT HIM",
+  "text": "JESUS; THE RULER'S DAUGHTER WHO HAD JUST DIED; THE CROWD LAUGHED AT HIM",
   "question": "Situation: Who said it, about whom, result? \"The girl is not dead but asleep.\"",
   "answers": [
    "JESUS",
@@ -7732,9 +7732,9 @@
   "id": 940,
   "ref": "Matthew 10:41",
   "type": "Direct",
-  "text": "WHOEVER WELCOMES A PHOPHET AS A PHOPHET",
+  "text": "WHOEVER WELCOMES A PROPHET AS A PROPHET",
   "question": "Who will receive a prophet's reward?",
-  "answer": "WHOEVER WELCOMES A PHOPHET AS A PHOPHET"
+  "answer": "WHOEVER WELCOMES A PROPHET AS A PROPHET"
  },
  {
   "id": 941,
