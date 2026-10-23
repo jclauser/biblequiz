@@ -102,6 +102,7 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
   <header>
     <h1>Quiz Off Trainer</h1>
     <p class="sub">FEC-style Bible quizzing practice: questions read aloud, answers by voice.</p>
+    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 23, 1:53 PM</span></p>
   </header>
 
   <div id="banner" class="banner" role="alert" hidden></div>
@@ -347,7 +348,7 @@ function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floo
 const el = {};
 ['banner','sQ','sCorrect','sErrors','status','qtext','jumpBtn','qTools','repeatBtn','skipBtn',
  'answerBox','transcript','typedRow','typed','doneBtn','result','actions','endBtn','summary','setMode','setVoice','setRate','rateVal',
- 'setChapter','setQset','setInfo','setSilence','setShowText','setShuffle','testBtn','testVoiceBtn','testOut','setAi','setKey','setRemember',
+ 'reloadBtn','setChapter','setQset','setInfo','setSilence','setShowText','setShuffle','testBtn','testVoiceBtn','testOut','setAi','setKey','setRemember',
  'bankInfo','bankFile','sampleBtn','dlBtn','bankText','loadBankBtn'].forEach(id => { el[id] = document.getElementById(id); });
 
 /* ================= settings ================= */
@@ -882,6 +883,12 @@ function bindSettings(){
   on(el.setSilence, 'change', () => { settings.silence = Math.min(8, Math.max(1, Number(el.setSilence.value) || 3)); });
   on(el.setShowText, 'change', () => { settings.showText = el.setShowText.checked; syncUI(); });
   on(el.setShuffle, 'change', () => { settings.shuffle = el.setShuffle.checked; });
+  el.reloadBtn.addEventListener('click', () => {
+    if (S.idx >= 0 && el.summary.hidden && !confirm('Reload now? Your current match will end. Settings are kept.')) return;
+    stopRec(); stopSpeaking();
+    // a changed address forces the browser to fetch the newest copy instead of a cached one
+    location.replace(location.pathname + '?v=' + Date.now());
+  });
   on(el.setChapter, 'change', () => { settings.chapter = el.setChapter.value; updatePracticeInfo(); });
   on(el.setQset, 'change', () => { settings.qset = el.setQset.value; updatePracticeInfo(); });
   on(el.setAi, 'change', () => { settings.aiEnabled = el.setAi.checked; });
