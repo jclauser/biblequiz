@@ -35,8 +35,7 @@ h3{font-size:.8rem;margin:.6rem 0 .1rem;color:var(--muted);text-transform:upperc
 .banner.info{background:var(--surface);color:var(--ink);border-color:var(--line)}
 .banner .x{background:none;border:0;color:inherit;font-size:1.4rem;line-height:1;cursor:pointer;padding:0 4px}
 
-.scoreboard{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
-@media(max-width:560px){.scoreboard{grid-template-columns:repeat(2,1fr)}}
+.scoreboard{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;text-align:center}
 .stat .lbl{display:block;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .stat .val{font-size:1.4rem;font-weight:700}
@@ -95,6 +94,7 @@ details.card summary{cursor:pointer;font-weight:700}
 .hint{font-size:.85rem;color:var(--muted);margin:.3rem 0}
 .testout{margin-top:6px;padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:8px;min-height:2.4rem}
 ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
+.tablewrap{overflow:auto;max-height:50vh}
 </style>
 </head>
 <body>
@@ -109,9 +109,8 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
 
   <section class="scoreboard" aria-label="Scoreboard">
     <div class="stat"><span class="lbl">Question</span><span class="val" id="sQ">–</span></div>
-    <div class="stat"><span class="lbl">Correct</span><span class="val" id="sCorrect">0/8</span></div>
-    <div class="stat"><span class="lbl">Errors</span><span class="val" id="sErrors">0/5</span></div>
-    <div class="stat"><span class="lbl">Fouls</span><span class="val" id="sFouls">0/3</span></div>
+    <div class="stat"><span class="lbl">Correct</span><span class="val" id="sCorrect">0</span></div>
+    <div class="stat"><span class="lbl">Errors</span><span class="val" id="sErrors">0</span></div>
   </section>
 
   <section class="card" aria-label="Match">
@@ -120,9 +119,9 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
 
     <button id="jumpBtn" class="jump" type="button" hidden disabled>JUMP<small>or press Space</small></button>
 
-    <div id="timers" class="timers" hidden>
-      <div class="tline" id="tA"><span id="lblA"></span><div class="bar"><i id="barA"></i></div></div>
-      <div class="tline" id="tB"><span id="lblB"></span><div class="bar"><i id="barB"></i></div></div>
+    <div id="qTools" class="actions" hidden>
+      <button id="repeatBtn" class="btn" type="button">Repeat question</button>
+      <button id="skipBtn" class="btn" type="button">Skip and show answer</button>
     </div>
 
     <div id="answerBox" hidden>
@@ -151,16 +150,14 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
         <input id="setRate" type="range" min="0.7" max="1.4" step="0.05"></div>
       <div class="field"><label for="setSilence">Auto-submit after silence (seconds)</label>
         <input id="setSilence" type="number" min="1" max="8" step="0.1"></div>
-      <div class="field"><label for="setJump">Time allowed to jump after reading (seconds)</label>
-        <input id="setJump" type="number" min="3" max="60" step="1"></div>
     </div>
     <div class="check"><input id="setShowText" type="checkbox"><label for="setShowText">Show question text on screen</label></div>
     <div class="check"><input id="setShuffle" type="checkbox"><label for="setShuffle">Shuffle questions</label></div>
 
     <h3>Microphone check</h3>
-    <button id="testBtn" class="btn" type="button">Test microphone</button>
+    <div class="actions"><button id="testBtn" class="btn" type="button">Test microphone</button><button id="testVoiceBtn" class="btn" type="button">Test voice</button></div>
     <div id="testOut" class="testout" aria-live="polite"></div>
-    <p class="hint">Chrome and Edge work best. They send microphone audio to an online speech service, so you need an internet connection, and the page must be served over HTTPS or from localhost.</p>
+    <p class="hint">Chrome and Edge work best. They send microphone audio to an online speech service, so you need an internet connection, and the page must be served over HTTPS or from localhost. On an iPhone, turn off Silent Mode and raise the volume to hear the questions.</p>
 
     <h3>Optional AI judge (Gemini 2.5 Flash)</h3>
     <div class="check"><input id="setAi" type="checkbox"><label for="setAi">Ask the AI only on close calls</label></div>
@@ -186,11 +183,11 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
   <details class="card">
     <summary>Rules used by this trainer</summary>
     <ul class="rules">
-      <li>20 questions per match.</li>
-      <li>Quiz-out at 8 correct answers (the match ends). Error-out at 5 errors. Foul-out at 3 fouls.</li>
-      <li>After you jump, wait to hear "Recognized." Speaking early is a foul. You then have 10 seconds to begin and 30 seconds in total.</li>
+      <li>Questions keep coming until you tap End match. There is no question limit and no time limit.</li>
+      <li>Tap Jump to stop the reading, then answer out loud.</li>
+      <li>Your answer is submitted after a short pause in your speaking, or when you tap Submit answer.</li>
       <li>Quotations must be verbatim. Extra or wrong words are errors.</li>
-      <li>This is a solo trainer, so toss-up and free questions do not apply.</li>
+      <li>Use Repeat question to hear a question again, or Skip and show answer to see it.</li>
     </ul>
   </details>
 </main>
@@ -336,13 +333,13 @@ const TYPE_LABEL = { Quotation: 'Quotation', Completion: 'Quotation Completion',
 function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
 const el = {};
-['banner','sQ','sCorrect','sErrors','sFouls','status','qtext','jumpBtn','timers','tA','tB','lblA','lblB','barA','barB',
+['banner','sQ','sCorrect','sErrors','status','qtext','jumpBtn','qTools','repeatBtn','skipBtn',
  'answerBox','transcript','typedRow','typed','doneBtn','result','actions','endBtn','summary','setMode','setVoice','setRate','rateVal',
- 'setSilence','setJump','setShowText','setShuffle','testBtn','testOut','setAi','setKey','setRemember',
+ 'setSilence','setShowText','setShuffle','testBtn','testVoiceBtn','testOut','setAi','setKey','setRemember',
  'bankInfo','bankFile','sampleBtn','dlBtn','bankText','loadBankBtn'].forEach(id => { el[id] = document.getElementById(id); });
 
 /* ================= settings ================= */
-const settings = { mode: 'voice', voice: '', rate: 1, silence: 2.2, jumpWindow: 15, showText: true, shuffle: true, aiEnabled: false, aiRemember: false, aiKey: '' };
+const settings = { mode: 'voice', voice: '', rate: 1, silence: 3, showText: true, shuffle: true, aiEnabled: false, aiRemember: false, aiKey: '' };
 function loadSettings(){
   try { Object.assign(settings, JSON.parse(localStorage.getItem('qot_settings') || '{}')); } catch (e) { /* ignore */ }
   try { settings.aiKey = sessionStorage.getItem('qot_gkey') || localStorage.getItem('qot_gkey') || ''; } catch (e) { /* ignore */ }
@@ -380,35 +377,34 @@ function setActions(list){
 }
 
 /* ================= match state ================= */
-const S = { state: 'idle', bank: [], deck: [], idx: -1, total: 0, records: [], cur: null, voice: true, ttsToken: 0, D: {}, spoke: false, lastText: '', jumpWindowMs: 15000 };
+const S = { state: 'idle', bank: [], deck: [], pos: 0, idx: -1, records: [], cur: null, voice: true, ttsToken: 0, D: {}, spoke: false, lastText: '', lastRecStop: -1e9 };
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 function tally(){
-  let correct = 0, errors = 0, fouls = 0;
+  let correct = 0, errors = 0;
   for (const r of S.records){
     if (r.outcome === 'correct') correct++;
-    else if (r.outcome === 'error' || r.outcome === 'timeout') errors++;
-    fouls += r.fouls;
+    else if (r.outcome === 'error') errors++;
   }
-  const quizOut = correct >= QUIZ_OUT, errorOut = errors >= ERROR_OUT, foulOut = fouls >= FOUL_OUT;
-  return { correct, errors, fouls, quizOut, errorOut, foulOut };
+  return { correct, errors, asked: S.records.length };
 }
 function renderScore(){
   const t = tally();
-  el.sQ.textContent = S.total ? Math.min(S.idx + 1, S.total) + '/' + S.total : '–';
-  el.sCorrect.textContent = t.correct + '/' + QUIZ_OUT;
-  el.sErrors.textContent = t.errors + '/' + ERROR_OUT;
-  el.sFouls.textContent = t.fouls + '/' + FOUL_OUT;
+  el.sQ.textContent = S.idx >= 0 ? String(S.idx + 1) : '–';
+  el.sCorrect.textContent = t.correct;
+  el.sErrors.textContent = t.errors;
 }
 function setState(s){ S.state = s; syncUI(); }
 function syncUI(){
   const st = S.state;
-  const inMatch = ['reading', 'await_jump', 'recognizing', 'answering', 'judging', 'result', 'error'].includes(st);
-  el.jumpBtn.hidden = !['reading', 'await_jump', 'recognizing', 'answering'].includes(st);
-  el.jumpBtn.disabled = !(st === 'reading' || st === 'await_jump');
-  el.timers.hidden = !(st === 'await_jump' || (st === 'answering' && S.voice));
-  el.tB.hidden = st === 'await_jump';
+  const canJump = st === 'reading' || st === 'await_jump';
+  const inMatch = ['reading', 'await_jump', 'answering', 'judging', 'result', 'error'].includes(st);
+  el.jumpBtn.hidden = !(canJump || st === 'answering');
+  el.jumpBtn.disabled = !canJump;
+  el.qTools.hidden = !(canJump || st === 'answering');
+  el.repeatBtn.disabled = st === 'answering';
   el.answerBox.hidden = st !== 'answering';
-  el.transcript.hidden = !(S.voice);
+  el.transcript.hidden = !S.voice;
   el.typedRow.hidden = S.voice;
   el.result.hidden = !(st === 'result' || st === 'error');
   el.endBtn.hidden = !inMatch;
@@ -441,7 +437,7 @@ function renderQuestionText(){
   const { q, spoken } = S.cur;
   el.qtext.textContent = '';
   const meta = document.createElement('div'); meta.className = 'qmeta';
-  meta.textContent = `Question ${S.idx + 1} of ${S.total} · ${TYPE_LABEL[q.type]}`;
+  meta.textContent = `Question ${S.idx + 1} · ${TYPE_LABEL[q.type]}`;
   const p = document.createElement('p'); p.textContent = spoken;
   el.qtext.append(meta, p);
 }
@@ -450,27 +446,34 @@ function renderQuestionText(){
 function speak(text, onend){
   const synth = window.speechSynthesis;
   const token = ++S.ttsToken;
-  const done = () => { if (token === S.ttsToken && onend) onend(); };
-  if (!synth || typeof SpeechSynthesisUtterance === 'undefined'){ setTimeout(done, 800); return; }
-  synth.cancel();                                   // queue cleanup: never overlap prompts
+  let fired = false;
+  const finish = () => { if (fired) return; fired = true; if (token === S.ttsToken && onend) onend(); };
+  if (!synth || typeof SpeechSynthesisUtterance === 'undefined'){ setTimeout(finish, 800); return; }
+  const busy = synth.speaking || synth.pending;
+  if (busy) synth.cancel();                         // queue cleanup: never overlap prompts
   const u = new SpeechSynthesisUtterance(speakable(text));
   const v = synth.getVoices().find(x => x.name === settings.voice);
   if (v){ u.voice = v; u.lang = v.lang; } else u.lang = 'en-US';
   u.rate = Number(settings.rate) || 1;
-  let fired = false;
-  const finish = () => { if (fired) return; fired = true; done(); };
   u.onend = finish; u.onerror = finish;             // stale callbacks are ignored via the token
   S.utter = u;                                      // keep a reference (avoids a Chrome GC bug)
-  setTimeout(() => { if (token === S.ttsToken) synth.speak(u); }, 60);
-  setTimeout(finish, Math.round(text.length * 110 / u.rate) + 3500);   // watchdog if no end event arrives
+  // iPhone Safari only allows speech that starts inside a tap, so speak at once when nothing needs cancelling.
+  const wait = busy ? 80 : (performance.now() - S.lastRecStop < 500 ? 450 : 0);
+  if (wait) setTimeout(() => { if (token === S.ttsToken) synth.speak(u); }, wait);
+  else synth.speak(u);
+  setTimeout(finish, Math.round(text.length * 110 / u.rate) + 3500 + wait);   // watchdog if no end event arrives
 }
-function stopSpeaking(){ S.ttsToken++; if (window.speechSynthesis) window.speechSynthesis.cancel(); }
+function stopSpeaking(){
+  S.ttsToken++;
+  const synth = window.speechSynthesis;
+  if (synth && (synth.speaking || synth.pending)) synth.cancel();
+}
 
 /* ================= speech recognition ================= */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const R = { rec: null, active: false, want: false, mode: null, pendingStart: false, committed: '', sessionText: '', restarts: [] };
+const R = { rec: null, active: false, want: false, mode: null, committed: '', sessionText: '', restarts: [] };
 const REC_MSG = {
-  'not-allowed': 'Microphone access is blocked. Allow the microphone for this site (lock icon in the address bar) and check your operating system\'s microphone privacy settings.',
+  'not-allowed': 'Microphone access is blocked. Allow the microphone for this site (lock icon in the address bar) and check your device\'s microphone and speech recognition privacy settings.',
   'service-not-allowed': 'Speech recognition is blocked for this site or by your system settings.',
   'audio-capture': 'No microphone was found, or another app is using it.',
   'network': 'The browser could not reach its speech-recognition service. Chrome and Edge send microphone audio to an online service, so an internet connection is required.',
@@ -479,13 +482,22 @@ const REC_MSG = {
   'start-failed': 'Speech recognition could not start.'
 };
 function getHeard(){ return (R.committed + ' ' + R.sessionText).replace(/\s+/g, ' ').trim(); }
-function ensureRec(){
-  if (R.rec) return R.rec;
+// Every listening session uses a brand-new recognizer. Reusing one after abort() is what fails on iPhone.
+function killRec(){
+  const r = R.rec; R.rec = null; R.active = false;
+  if (r){
+    r.onstart = r.onresult = r.onerror = r.onend = null;
+    try { r.abort(); } catch (e) { /* ignore */ }
+    S.lastRecStop = performance.now();
+  }
+}
+function launchRec(){
+  if (!R.want) return;
   const r = new SR();
   r.continuous = true; r.interimResults = true; r.lang = 'en-US'; r.maxAlternatives = 1;
-  r.onstart = () => { R.active = true; R.sessionText = ''; };
+  r.onstart = () => { if (R.rec === r) R.active = true; };
   r.onresult = e => {
-    if (!R.want || R.pendingStart) return;
+    if (R.rec !== r || !R.want) return;
     let fin = '', interim = '';
     for (let i = 0; i < e.results.length; i++){
       const t = e.results[i][0].transcript;
@@ -494,61 +506,53 @@ function ensureRec(){
     R.sessionText = (fin + interim).trim();
     onHeard();
   };
-  r.onerror = e => handleRecError(e.error);
-  r.onend = () => {                                  // auto-restart loop (browser ends sessions after silence/timeouts)
+  r.onerror = e => { if (R.rec === r) handleRecError(e.error); };
+  r.onend = () => {                                  // the browser ends sessions on its own: carry the text over and listen again
+    if (R.rec !== r) return;
     R.active = false;
     if (!R.want) return;
-    if (R.pendingStart){ R.pendingStart = false; setTimeout(startRecNow, 60); return; }
     R.committed = (R.committed + ' ' + R.sessionText).trim(); R.sessionText = '';
     const now = Date.now();
     R.restarts = R.restarts.filter(t => now - t < 10000); R.restarts.push(now);
     if (R.restarts.length > 8){ handleRecError('restart-loop'); return; }
-    setTimeout(() => { if (R.want && !R.active) startRecNow(); }, 200);
+    R.rec = null;
+    setTimeout(() => { if (R.want && !R.rec) launchRec(); }, 250);
   };
-  R.rec = r; return r;
-}
-function startRecNow(){
-  if (!R.want) return;
-  try { ensureRec().start(); }
-  catch (err){ if (!(err && err.name === 'InvalidStateError')) handleRecError('start-failed'); }
+  R.rec = r;
+  try { r.start(); } catch (err){ handleRecError('start-failed'); }
 }
 function startRec(mode){
   if (!SR) return false;
+  killRec();
   R.mode = mode; R.want = true; R.committed = ''; R.sessionText = ''; R.restarts = [];
-  if (R.active){ R.pendingStart = true; try { R.rec.abort(); } catch (e) { /* ignore */ } }
-  else startRecNow();
+  launchRec();
   return true;
 }
-function stopRec(){
-  R.want = false; R.pendingStart = false; R.mode = null;
-  if (R.rec && R.active){ try { R.rec.abort(); } catch (e) { /* ignore */ } }
-}
+function stopRec(){ R.want = false; R.mode = null; killRec(); }
 function handleRecError(code){
   if (code === 'aborted') return;
-  if (code === 'no-speech'){                         // not fatal: onend restarts the session
+  if (code === 'no-speech'){                         // not fatal: onend listens again
     if (S.state === 'answering' && !S.spoke) el.transcript.textContent = 'Listening… (no speech detected yet)';
     return;
   }
   const msg = REC_MSG[code] || ('Speech recognition error: ' + code);
   const mode = R.mode;
-  R.want = false; R.pendingStart = false; R.mode = null;
+  R.want = false; R.mode = null; killRec();
+  if (mode === 'test'){ banner(msg, 'error', 0); el.testOut.textContent = 'Error: ' + code; el.testBtn.textContent = 'Test microphone'; return; }
+  if (S.state === 'answering' && S.spoke){          // the mic dropped after you had already answered: grade what was heard
+    banner('The microphone stopped, so your answer was submitted as heard.', 'warn');
+    submitAnswer(); return;
+  }
   banner(msg, 'error', 0);
-  if (mode === 'test'){ el.testOut.textContent = 'Error: ' + code; el.testBtn.textContent = 'Test microphone'; return; }
-  if (S.state === 'recognizing' || S.state === 'answering') enterError(msg);
+  if (S.state === 'answering') enterError(msg);
 }
 function onHeard(){
   const text = getHeard();
-  const now = performance.now();
-  if (R.mode === 'foul'){
-    if (text && S.cur && !S.cur.foulled){
-      S.cur.foulled = true; S.cur.rec.fouls++; renderScore();
-      banner('Foul: you spoke before being recognized.', 'warn');
-    }
-  } else if (R.mode === 'answer'){
+  if (R.mode === 'answer'){
     el.transcript.textContent = text || 'Listening…';
     if (text && text !== S.lastText){
       S.lastText = text; S.spoke = true;
-      S.D.silence = now + settings.silence * 1000;
+      S.D.silence = performance.now() + settings.silence * 1000;
     }
   } else if (R.mode === 'test'){
     el.testOut.textContent = text || 'Listening…';
@@ -567,79 +571,61 @@ async function primeMic(){
 async function startMatch(){
   if (!S.bank.length){ banner('The question bank is empty. Load questions first.', 'error'); return; }
   stopRec(); stopSpeaking();
+  el.testBtn.textContent = 'Test microphone';
   S.voice = !!SR && settings.mode === 'voice';
-  if (S.voice && !(await primeMic())) return;
-  const d = S.bank.slice(); if (settings.shuffle) shuffle(d);
-  S.total = Math.min(MATCH_Q, d.length); S.deck = d.slice(0, S.total); S.idx = -1; S.records = []; S.cur = null;
-  if (S.bank.length < MATCH_Q) banner(`Your bank has ${S.bank.length} questions, so this match has ${S.total} instead of ${MATCH_Q}.`, 'info');
+  // On iPhone nothing may run between the tap and the first spoken word, so the mic pre-check is skipped there.
+  if (S.voice && !IS_IOS && !(await primeMic())) return;
+  S.deck = []; S.pos = 0; S.idx = -1; S.records = []; S.cur = null;
   el.summary.hidden = true;
+  if (IS_IOS) banner('iPhone tip: if you cannot hear the questions, turn off Silent Mode (the switch on the side of the phone) and raise the volume. Settings has a Test voice button.', 'info', 12000);
   nextQuestion();
 }
 function nextQuestion(){
+  if (S.pos >= S.deck.length){                       // no question limit: reshuffle when the bank runs out
+    if (S.deck.length) banner('You have been through the whole bank. Reshuffling.', 'info');
+    S.deck = S.bank.slice(); if (settings.shuffle) shuffle(S.deck); S.pos = 0;
+  }
+  const q = S.deck[S.pos++];
   S.idx++;
-  const q = S.deck[S.idx];
-  const rec = { q, outcome: null, fouls: 0, heard: '', eval: null, aiNote: '', ai: false, note: '', manual: false };
+  const rec = { q, outcome: null, heard: '', eval: null, aiNote: '', ai: false, note: '', manual: false };
   S.records.push(rec);
-  S.cur = { q, rec, spoken: buildPreamble(q, S.idx + 1), foulled: false };
+  S.cur = { q, rec, spoken: buildPreamble(q, S.idx + 1) };
   setActions([]); renderScore(); readQuestion();
 }
 function readQuestion(){
-  S.D = {}; S.spoke = false; S.lastText = '';
+  stopRec(); S.D = {}; S.spoke = false; S.lastText = '';
   setState('reading');
-  setStatus('Reading question ' + (S.idx + 1) + '… press Jump to interrupt.');
+  setStatus('Reading question ' + (S.idx + 1) + '… tap Jump to answer.');
   renderQuestionText();
   setActions([]);
   el.jumpBtn.focus();
   speak(S.cur.spoken, () => {
     if (S.state !== 'reading') return;
-    S.jumpWindowMs = Math.max(3, Number(settings.jumpWindow) || 15) * 1000;
-    S.D.jump = performance.now() + S.jumpWindowMs;
-    setState('await_jump'); setStatus('Question read. Jump to answer.');
+    setState('await_jump'); setStatus('Question read. Tap Jump when you are ready to answer.');
   });
 }
 function jump(){
   if (S.state !== 'reading' && S.state !== 'await_jump') return;
-  stopSpeaking(); S.D = {};
-  setState('recognizing'); setStatus('Jumped. Wait to be recognized…');
-  if (S.voice) startRec('foul');                    // mic is live only to catch speaking before recognition
-  S.D.foul = performance.now() + (S.voice ? 900 + Math.random() * 600 : 600);
-}
-function finishRecognitionWindow(){
-  stopRec();                                         // mic off so "Recognized." is never transcribed
-  setStatus('Recognized.');
-  speak('Recognized.', beginAnswering);
-}
-function beginAnswering(){
-  if (S.state !== 'recognizing') return;
-  S.spoke = false; S.lastText = '';
-  setState('answering');
-  el.typed.value = '';
+  stopSpeaking(); S.D = {}; S.spoke = false; S.lastText = '';
+  setState('answering'); el.typed.value = '';
   if (S.voice){
     el.transcript.textContent = 'Listening…';
-    const now = performance.now();
-    S.D.start = now + START_LIMIT_MS + GRACE_MS; S.D.total = now + TOTAL_LIMIT_MS + GRACE_MS; S.D.silence = null;
-    startRec('answer');
-    setStatus('Recognized. Answer now!');
+    setStatus('Recognized. Answer now.');
+    startRec('answer');                              // started inside the tap: iPhone Safari only allows that
   } else {
     setStatus('Recognized. Type your answer and press Enter.'); el.typed.focus();
   }
 }
-function answerTimeout(){
-  stopRec(); S.D = {};
-  const rec = S.cur.rec; rec.outcome = 'timeout';
-  rec.note = 'You did not begin speaking within 10 seconds of being recognized.';
-  showResult();
-}
-function noJump(){
-  S.D = {};
-  const rec = S.cur.rec; rec.outcome = 'pass';
-  rec.note = 'No jump before time ran out.';
+function skipQuestion(){
+  if (S.state !== 'reading' && S.state !== 'await_jump' && S.state !== 'answering') return;
+  stopSpeaking(); stopRec(); S.D = {};
+  const rec = S.cur.rec; rec.outcome = 'skipped'; rec.note = 'Skipped. The answer is shown below.';
   showResult();
 }
 async function submitAnswer(){
   if (S.state !== 'answering') return;
   const heard = S.voice ? getHeard() : el.typed.value.trim();
-  if (!heard){ if (S.voice) setStatus('Nothing heard yet…'); else el.typed.focus(); return; }
+  if (!heard){ if (S.voice) setStatus('Nothing heard yet. Keep talking, or skip the question.'); else el.typed.focus(); return; }
   stopRec(); S.D = {}; setState('judging'); setStatus('Judging…');
   const { q, rec } = S.cur;
   rec.heard = heard;
@@ -662,6 +648,11 @@ function enterError(msg){
     { label: 'Skip question', fn: () => { S.cur.rec.outcome = 'skipped'; S.cur.rec.note = 'Skipped after a microphone problem.'; showResult(); } }
   ]);
 }
+function testVoice(){
+  if (R.want) stopRec();
+  el.testOut.textContent = 'Playing… if you hear nothing, check the silent switch and the volume.';
+  speak('Question number one. If you can hear this, the quizmaster voice is working.', () => { el.testOut.textContent = 'Voice test finished.'; });
+}
 
 /* ================= results ================= */
 function headline(rec){
@@ -669,8 +660,6 @@ function headline(rec){
   switch (rec.outcome){
     case 'correct': return { t: 'Correct' + man, c: 'good' };
     case 'error': return { t: 'Error' + man, c: 'bad' };
-    case 'timeout': return { t: 'Time violation', c: 'bad' };
-    case 'pass': return { t: 'No jump', c: 'neutral' };
     case 'skipped': return { t: 'Skipped', c: 'neutral' };
     default: return { t: 'Close call. You decide.', c: 'warn' };
   }
@@ -681,7 +670,7 @@ function tokensHtml(tokens, hit, cls){
 function renderResult(){
   const { q, rec } = S.cur, ev = rec.eval, h = headline(rec);
   const out = [];
-  out.push(`<p class="verdict ${h.c}">${esc(h.t)}${rec.fouls ? ` <span class="chip bad">Foul ×${rec.fouls}</span>` : ''}</p>`);
+  out.push(`<p class="verdict ${h.c}">${esc(h.t)}</p>`);
   out.push(`<p class="meta">${esc(q.ref)} · ${TYPE_LABEL[q.type]}</p>`);
   if (rec.note) out.push(`<p class="note">${esc(rec.note)}</p>`);
   if (ev){
@@ -692,12 +681,12 @@ function renderResult(){
     if (ev.swaps && ev.swaps.length) m += ' · accepted as recognition variance: ' + ev.swaps.map(s => esc(s[0]) + ' → ' + esc(s[1])).join(', ');
     out.push(`<p class="meta">${m}</p>`);
   } else {
-    out.push(`<div class="cmp"><h3>Answer</h3>${expectedText(q).map(t => `<p>${esc(t)}</p>`).join('')}</div>`);
+    const shown = q.type === 'Completion' ? [q.text] : expectedText(q);
+    out.push(`<div class="cmp"><h3>Answer</h3>${shown.map(t => `<p>${esc(t)}</p>`).join('')}</div>`);
   }
   if (rec.aiNote) out.push(`<p class="note">${rec.ai ? 'AI judge: ' : ''}${esc(rec.aiNote)}</p>`);
   el.result.innerHTML = out.join('');
 }
-function isLast(){ const t = tally(); return t.quizOut || t.errorOut || t.foulOut || S.idx >= S.total - 1; }
 function renderResultActions(){
   const rec = S.cur.rec;
   if (rec.outcome === null){
@@ -707,8 +696,7 @@ function renderResultActions(){
     ]);
     return;
   }
-  const last = isLast();
-  const acts = [{ label: last ? 'See final results' : 'Next question', fn: last ? finishMatch : nextQuestion, primary: true }];
+  const acts = [{ label: 'Next question', fn: nextQuestion, primary: true }];
   if (rec.eval && (rec.outcome === 'correct' || rec.outcome === 'error')) acts.push({ label: 'Flip ruling', fn: flipRuling });
   setActions(acts);
 }
@@ -718,27 +706,22 @@ function showResult(){
   setState('result'); renderScore(); renderResult(); renderResultActions();
   const o = S.cur.rec.outcome;
   setStatus(o === null ? 'Close call. Make the ruling.' : 'Result below.');
-  if (o === 'correct') speak('Correct.'); else if (o === 'error') speak('Incorrect.'); else if (o === 'timeout') speak('Time.');
+  if (o === 'correct') speak('Correct.'); else if (o === 'error') speak('Incorrect.');
 }
 function outcomeLabel(r){
-  return ({ correct: 'Correct', error: 'Error', timeout: 'Time violation', pass: 'No jump', skipped: 'Skipped' })[r.outcome] || 'Unruled';
+  return ({ correct: 'Correct', error: 'Error', skipped: 'Skipped' })[r.outcome] || 'Unruled';
 }
 function finishMatch(){
   stopRec(); stopSpeaking(); S.D = {};
   setState('done'); renderScore();
-  const t = tally(), why = [];
-  if (t.quizOut) why.push(`Quiz-out: you reached ${QUIZ_OUT} correct answers.`);
-  if (t.errorOut) why.push(`Error-out: ${ERROR_OUT} errors removed you from the match.`);
-  if (t.foulOut) why.push(`Foul-out: ${FOUL_OUT} fouls removed you from the match.`);
-  if (!why.length) why.push(`All ${S.total} questions completed.`);
-  const rows = S.records.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.q.ref)}</td><td>${TYPE_LABEL[r.q.type]}</td><td>${outcomeLabel(r)}${r.fouls ? ' + foul' : ''}</td></tr>`).join('');
+  const t = tally();
+  const rows = S.records.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.q.ref)}</td><td>${TYPE_LABEL[r.q.type]}</td><td>${outcomeLabel(r)}</td></tr>`).join('');
   el.summary.hidden = false;
   el.summary.innerHTML = `<h2>Match summary</h2><p class="big">${t.correct} correct</p>` +
-    `<p>${why.map(esc).join(' ')}</p>` +
-    `<p class="meta">Errors ${t.errors} · Fouls ${t.fouls} · ${S.records.length} question${S.records.length === 1 ? '' : 's'} asked</p>` +
-    `<table><thead><tr><th>#</th><th>Reference</th><th>Type</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table>`;
+    `<p class="meta">${t.errors} error${t.errors === 1 ? '' : 's'} · ${t.asked} question${t.asked === 1 ? '' : 's'} asked</p>` +
+    `<div class="tablewrap"><table><thead><tr><th>#</th><th>Reference</th><th>Type</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   setStatus('Match over.');
-  setActions([{ label: 'Play again', fn: startMatch, primary: true }]);
+  setActions([{ label: 'Start again', fn: startMatch, primary: true }]);
   speak('Match complete. You answered ' + t.correct + ' correctly.');
 }
 
@@ -771,27 +754,11 @@ Reply with JSON only: {"correct": true or false, "reason": "one short sentence"}
 }
 
 /* ================= timers ================= */
-function setBar(bar, frac){ bar.style.width = Math.max(0, Math.min(1, frac)) * 100 + '%'; }
+// No answer or jump time limits. This only submits after you stop talking, and ends the mic test.
 function tick(){
   const now = performance.now(), D = S.D;
   if (D.test && now >= D.test){ D.test = null; stopRec(); el.testBtn.textContent = 'Test microphone'; }
-  if (S.state === 'await_jump'){
-    const left = Math.max(0, D.jump - now);
-    el.lblA.textContent = 'Time to jump: ' + Math.ceil(left / 1000) + 's';
-    setBar(el.barA, left / S.jumpWindowMs);
-    if (left <= 0) noJump();
-  } else if (S.state === 'recognizing'){
-    if (D.foul && now >= D.foul){ D.foul = null; finishRecognitionWindow(); }
-  } else if (S.state === 'answering' && S.voice){
-    const startLeft = S.spoke ? 0 : Math.max(0, D.start - now), totalLeft = Math.max(0, D.total - now);
-    el.lblA.textContent = S.spoke ? 'Begin speaking: done' : 'Begin speaking: ' + Math.ceil(startLeft / 1000) + 's';
-    el.lblB.textContent = 'Total time: ' + Math.ceil(totalLeft / 1000) + 's';
-    setBar(el.barA, S.spoke ? 0 : startLeft / (START_LIMIT_MS + GRACE_MS));
-    setBar(el.barB, totalLeft / (TOTAL_LIMIT_MS + GRACE_MS));
-    if (!S.spoke && now >= D.start){ answerTimeout(); return; }
-    if (now >= D.total){ if (getHeard()) submitAnswer(); else answerTimeout(); return; }
-    if (S.spoke && D.silence && now >= D.silence) submitAnswer();
-  }
+  if (S.state === 'answering' && S.voice && S.spoke && D.silence && now >= D.silence) submitAnswer();
 }
 
 /* ================= question bank ================= */
@@ -850,15 +817,14 @@ function refreshVoices(){
 }
 function bindSettings(){
   el.setMode.value = settings.mode; el.setRate.value = settings.rate; el.rateVal.textContent = Number(settings.rate).toFixed(2).replace(/0$/, '');
-  el.setSilence.value = settings.silence; el.setJump.value = settings.jumpWindow;
+  el.setSilence.value = settings.silence;
   el.setShowText.checked = settings.showText; el.setShuffle.checked = settings.shuffle;
   el.setAi.checked = settings.aiEnabled; el.setKey.value = settings.aiKey; el.setRemember.checked = settings.aiRemember;
   const on = (node, ev, fn) => node.addEventListener(ev, () => { fn(); saveSettings(); });
   on(el.setMode, 'change', () => { settings.mode = el.setMode.value; });
   on(el.setVoice, 'change', () => { settings.voice = el.setVoice.value; });
   on(el.setRate, 'input', () => { settings.rate = Number(el.setRate.value); el.rateVal.textContent = settings.rate.toFixed(2).replace(/0$/, ''); });
-  on(el.setSilence, 'change', () => { settings.silence = Math.min(8, Math.max(1, Number(el.setSilence.value) || 2.2)); });
-  on(el.setJump, 'change', () => { settings.jumpWindow = Math.min(60, Math.max(3, Number(el.setJump.value) || 15)); });
+  on(el.setSilence, 'change', () => { settings.silence = Math.min(8, Math.max(1, Number(el.setSilence.value) || 3)); });
   on(el.setShowText, 'change', () => { settings.showText = el.setShowText.checked; syncUI(); });
   on(el.setShuffle, 'change', () => { settings.shuffle = el.setShuffle.checked; });
   on(el.setAi, 'change', () => { settings.aiEnabled = el.setAi.checked; });
@@ -889,6 +855,9 @@ function init(){
   if (!loaded) setBank(BUILTIN, 'Matthew 1\u201310 bank', false);
 
   el.jumpBtn.addEventListener('click', jump);
+  el.repeatBtn.addEventListener('click', () => { if (S.state === 'reading' || S.state === 'await_jump') readQuestion(); });
+  el.skipBtn.addEventListener('click', skipQuestion);
+  el.testVoiceBtn.addEventListener('click', testVoice);
   el.doneBtn.addEventListener('click', submitAnswer);
   el.typed.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); submitAnswer(); } });
   el.endBtn.addEventListener('click', () => { if (window.confirm('End this match now?')) finishMatch(); });
