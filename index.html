@@ -142,6 +142,15 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
 
   <details class="card">
     <summary>Settings</summary>
+    <h3>Practice set</h3>
+    <div class="grid2">
+      <div class="field"><label for="setChapter">Chapter</label>
+        <select id="setChapter"><option value="all">All chapters</option></select></div>
+      <div class="field"><label for="setQset">Question types</label>
+        <select id="setQset"><option value="all">All questions</option><option value="ftv">Finish the verse only (first words + quote)</option></select></div>
+    </div>
+    <p class="hint" id="setInfo"></p>
+    <h3>Voice and input</h3>
     <div class="grid2">
       <div class="field"><label for="setMode">Answer input</label>
         <select id="setMode"><option value="voice">Voice (microphone)</option><option value="type">Typed (for testing grading)</option></select></div>
@@ -338,11 +347,11 @@ function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floo
 const el = {};
 ['banner','sQ','sCorrect','sErrors','status','qtext','jumpBtn','qTools','repeatBtn','skipBtn',
  'answerBox','transcript','typedRow','typed','doneBtn','result','actions','endBtn','summary','setMode','setVoice','setRate','rateVal',
- 'setSilence','setShowText','setShuffle','testBtn','testVoiceBtn','testOut','setAi','setKey','setRemember',
+ 'setChapter','setQset','setInfo','setSilence','setShowText','setShuffle','testBtn','testVoiceBtn','testOut','setAi','setKey','setRemember',
  'bankInfo','bankFile','sampleBtn','dlBtn','bankText','loadBankBtn'].forEach(id => { el[id] = document.getElementById(id); });
 
 /* ================= settings ================= */
-const settings = { mode: 'voice', voice: '', rate: 1, silence: 3, showText: true, shuffle: true, aiEnabled: false, aiRemember: false, aiKey: '' };
+const settings = { mode: 'voice', voice: '', rate: 1, silence: 3, showText: true, shuffle: true, chapter: 'all', qset: 'all', aiEnabled: false, aiRemember: false, aiKey: '' };
 function loadSettings(){
   try { Object.assign(settings, JSON.parse(localStorage.getItem('qot_settings') || '{}')); } catch (e) { /* ignore */ }
   try { settings.aiKey = sessionStorage.getItem('qot_gkey') || localStorage.getItem('qot_gkey') || ''; } catch (e) { /* ignore */ }
@@ -588,6 +597,7 @@ async function primeMic(){
 /* ================= match flow ================= */
 async function startMatch(){
   if (!S.bank.length){ banner('The question bank is empty. Load questions first.', 'error'); return; }
+  if (!buildDeck().length){ banner('No questions match the chapter and type you selected. Open Settings and choose another practice set.', 'error'); return; }
   stopRec(); stopSpeaking();
   el.testBtn.textContent = 'Test microphone';
   S.voice = !!SR && settings.mode === 'voice';
@@ -598,11 +608,35 @@ async function startMatch(){
   if (IS_IOS) banner('iPhone tip: if you cannot hear the questions, turn off Silent Mode (the switch on the side of the phone) and raise the volume. Settings has a Test voice button.', 'info', 12000);
   nextQuestion();
 }
+function chapterOf(b){ const m = /(\d+):\d+/.exec(b.ref || ''); return m ? Number(m[1]) : null; }
+function buildDeck(){
+  let src = S.bank;
+  if (settings.chapter !== 'all') src = src.filter(b => chapterOf(b) === Number(settings.chapter));
+  if (settings.qset === 'ftv') src = src.filter(b => b.type === 'Completion');
+  const deck = [];
+  // every finish-the-verse verse is asked both ways: first words and quote
+  src.forEach(b => { deck.push(b); if (b.type === 'Completion') deck.push({ ...b, type: 'Quotation', ftv: 'quote' }); });
+  return deck;
+}
+function updatePracticeInfo(){
+  const n = buildDeck().length;
+  el.setInfo.textContent = n ? `${n} question${n === 1 ? '' : 's'} in this practice set.` : 'No questions match this chapter and type. Choose another combination.';
+  return n;
+}
+function refreshChapters(){
+  const chs = [...new Set(S.bank.map(chapterOf).filter(c => c !== null))].sort((a, b) => a - b);
+  el.setChapter.textContent = '';
+  const a = document.createElement('option'); a.value = 'all'; a.textContent = 'All chapters'; el.setChapter.append(a);
+  chs.forEach(c => { const o = document.createElement('option'); o.value = String(c); o.textContent = 'Chapter ' + c; el.setChapter.append(o); });
+  if (settings.chapter !== 'all' && !chs.includes(Number(settings.chapter))) settings.chapter = 'all';
+  el.setChapter.value = String(settings.chapter);
+  el.setQset.value = settings.qset;
+  updatePracticeInfo();
+}
 function nextQuestion(){
   if (S.pos >= S.deck.length){                       // no question limit: reshuffle when the bank runs out
     if (S.deck.length) banner('You have been through the whole bank. Reshuffling.', 'info');
-    // every finish-the-verse verse is asked both ways: first words and quote
-    S.deck = []; S.bank.forEach(b => { S.deck.push(b); if (b.type === 'Completion') S.deck.push({ ...b, type: 'Quotation', ftv: 'quote' }); });
+    S.deck = buildDeck();
     if (settings.shuffle) shuffle(S.deck); S.pos = 0;
   }
   const q = S.deck[S.pos++];
@@ -821,6 +855,7 @@ function setBank(arr, label, persist = true){
   S.bank = bank;
   try { if (persist) localStorage.setItem('qot_bank2', JSON.stringify(arr)); else localStorage.removeItem('qot_bank2'); } catch (e) { /* ignore */ }
   el.bankInfo.textContent = `${label}: ${bank.length} questions loaded.` + (problems.length ? ' ' + problems.slice(0, 4).join(' ') : '');
+  if (el.setChapter) refreshChapters();
   if (problems.length) banner(`${bank.length} loaded. ${problems.slice(0, 2).join(' ')}`, 'warn', 12000);
   return true;
 }
@@ -847,6 +882,8 @@ function bindSettings(){
   on(el.setSilence, 'change', () => { settings.silence = Math.min(8, Math.max(1, Number(el.setSilence.value) || 3)); });
   on(el.setShowText, 'change', () => { settings.showText = el.setShowText.checked; syncUI(); });
   on(el.setShuffle, 'change', () => { settings.shuffle = el.setShuffle.checked; });
+  on(el.setChapter, 'change', () => { settings.chapter = el.setChapter.value; updatePracticeInfo(); });
+  on(el.setQset, 'change', () => { settings.qset = el.setQset.value; updatePracticeInfo(); });
   on(el.setAi, 'change', () => { settings.aiEnabled = el.setAi.checked; });
   on(el.setKey, 'change', () => { settings.aiKey = el.setKey.value.trim(); });
   on(el.setRemember, 'change', () => { settings.aiRemember = el.setRemember.checked; });
