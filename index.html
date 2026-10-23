@@ -102,7 +102,7 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
   <header>
     <h1>Quiz Off Trainer</h1>
     <p class="sub">FEC-style Bible quizzing practice: questions read aloud, answers by voice.</p>
-    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 23, 1:53 PM</span></p>
+    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 23, 3:24 PM</span></p>
   </header>
 
   <div id="banner" class="banner" role="alert" hidden></div>
@@ -196,7 +196,7 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
       <li>Questions keep coming until you tap End match. There is no question limit and no time limit.</li>
       <li>Tap Jump to stop the reading, then answer out loud.</li>
       <li>Your answer is submitted after a short pause in your speaking, or when you tap Submit answer.</li>
-      <li>Questions are read the FEC way: the question number, then \u201cQuestion.\u201d Reference questions begin \u201cAccording to \u2026\u201d. The question is read once (use Repeat question for practice).</li>
+      <li>Questions are read the FEC way: the question number, then \u201cQuestion.\u201d Each is announced as a regular or reference question (reference questions begin \u201cAccording to \u2026\u201d). The question is read once (use Repeat question for practice).</li>
       <li>A question that starts with \u201cAccording to\u201d is a reference question; any other direct question is regular. Finish-this-verse is asked two ways: <em>First Words</em> (the first five words are read; finish the verse) or <em>Quote</em> (the reference is read; say the whole verse). Both must be word-perfect.</li>
       <li>Scriptural questions are worded exactly as in Scripture and need the word-perfect answer. Situation questions are announced with the items to give (for example, who said it, to whom) and do not need to be word-perfect.</li>
       <li>Quotations must be verbatim. Extra or wrong words are errors.</li>
@@ -445,7 +445,8 @@ function buildPreamble(q, n){
     default: {
       let body = q.question;
       if (!body && q.preamble) body = q.preamble.replace(/^Question number\s+\d+[^:]*:\s*/i, '');
-      return `Question number ${n}. Question: ${body}${/[?.!]$/.test(body) ? '' : '?'}`;
+      const kind = /^\s*according to/i.test(body) ? 'reference' : 'regular';
+      return `Question number ${n} is a ${kind} question. Question: ${body}${/[?.!]$/.test(body) ? '' : '?'}`;
     }
   }
 }
