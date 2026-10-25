@@ -102,7 +102,7 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
   <header>
     <h1>Quiz Off Trainer</h1>
     <p class="sub">FEC-style Bible quizzing practice: questions read aloud, answers by voice.</p>
-    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 24, 8:51 AM</span></p>
+    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 25, 8:18 AM</span></p>
   </header>
 
   <div id="banner" class="banner" role="alert" hidden></div>
@@ -148,7 +148,7 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
       <div class="field"><label for="setChapter">Chapter</label>
         <select id="setChapter"><option value="all">All chapters</option></select></div>
       <div class="field"><label for="setQset">Question types</label>
-        <select id="setQset"><option value="all">All questions</option><option value="ftv">Finish the verse only (first words + quote)</option></select></div>
+        <select id="setQset"><option value="all">All questions</option><option value="ftv">Finish the verse only (first words + quote)</option><option value="scriptural">Scriptural questions only</option></select></div>
     </div>
     <p class="hint" id="setInfo"></p>
     <h3>Voice and input</h3>
@@ -622,6 +622,7 @@ function buildDeck(){
   let src = S.bank;
   if (settings.chapter !== 'all') src = src.filter(b => chapterOf(b) === Number(settings.chapter));
   if (settings.qset === 'ftv') src = src.filter(b => b.type === 'Completion');
+  if (settings.qset === 'scriptural') src = src.filter(b => b.type === 'Quotation');
   const deck = [];
   // every finish-the-verse verse is asked both ways: first words and quote
   src.forEach(b => { deck.push(b); if (b.type === 'Completion') deck.push({ ...b, type: 'Quotation', ftv: 'quote' }); });
