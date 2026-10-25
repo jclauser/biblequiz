@@ -102,7 +102,7 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
   <header>
     <h1>Quiz Off Trainer</h1>
     <p class="sub">FEC-style Bible quizzing practice: questions read aloud, answers by voice.</p>
-    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 25, 8:18 AM</span></p>
+    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 25, 8:30 AM</span></p>
   </header>
 
   <div id="banner" class="banner" role="alert" hidden></div>
@@ -163,6 +163,7 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
     </div>
     <div class="check"><input id="setShowText" type="checkbox"><label for="setShowText">Show question text on screen</label></div>
     <div class="check"><input id="setShuffle" type="checkbox"><label for="setShuffle">Shuffle questions</label></div>
+    <div class="check"><input id="setSnark" type="checkbox"><label for="setSnark">Snarky remarks on wrong answers (just for fun, off by default)</label></div>
 
     <h3>Microphone check</h3>
     <div class="actions"><button id="testBtn" class="btn" type="button">Test microphone</button><button id="testVoiceBtn" class="btn" type="button">Test voice</button></div>
@@ -362,11 +363,11 @@ function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floo
 const el = {};
 ['banner','sQ','sCorrect','sErrors','status','qtext','jumpBtn','qTools','repeatBtn','skipBtn',
  'answerBox','transcript','typedRow','typed','doneBtn','result','actions','endBtn','summary','setMode','setVoice','setRate','rateVal',
- 'reloadBtn','setChapter','setQset','setInfo','setSilence','setShowText','setShuffle','testBtn','testVoiceBtn','testOut',
+ 'reloadBtn','setChapter','setQset','setInfo','setSilence','setShowText','setShuffle','setSnark','testBtn','testVoiceBtn','testOut',
  'bankInfo','bankFile','sampleBtn','dlBtn','bankText','loadBankBtn'].forEach(id => { el[id] = document.getElementById(id); });
 
 /* ================= settings ================= */
-const settings = { mode: 'voice', voice: '', rate: 1, silence: 3, showText: true, shuffle: true, chapter: 'all', qset: 'all' };
+const settings = { mode: 'voice', voice: '', rate: 1, silence: 3, showText: true, shuffle: true, chapter: 'all', qset: 'all', snark: false };
 function loadSettings(){
   try { Object.assign(settings, JSON.parse(localStorage.getItem('qot_settings') || '{}')); } catch (e) { /* ignore */ }
   try { localStorage.removeItem('qot_gkey'); sessionStorage.removeItem('qot_gkey'); } catch (e) { /* remove any key saved by an earlier version */ }
@@ -733,6 +734,7 @@ function renderResult(){
   out.push(`<p class="verdict ${h.c}">${esc(h.t)}</p>`);
   out.push(`<p class="meta">${esc(q.ref)} · ${typeLabel(q)}</p>`);
   if (rec.note) out.push(`<p class="note">${esc(rec.note)}</p>`);
+  if (rec.remark && rec.outcome === 'error') out.push(`<p class="note">${esc(rec.remark)}</p>`);
   if (ev){
     if (ev.openingText) out.push(`<p class="meta">Opening read to you: ${esc(ev.openingText)}…</p>`);
     out.push(`<div class="cmp"><h3>You said</h3><p>${ev.heardTokens ? tokensHtml(ev.heardTokens, ev.heardHit, 'extra') : esc(rec.heard)}</p></div>`);
@@ -762,11 +764,39 @@ function renderResultActions(){
 }
 function rule(o){ const rec = S.cur.rec; rec.outcome = o; rec.manual = true; renderScore(); renderResult(); renderResultActions(); }
 function flipRuling(){ const rec = S.cur.rec; rec.outcome = rec.outcome === 'correct' ? 'error' : 'correct'; rec.manual = true; renderScore(); renderResult(); renderResultActions(); }
+const SNARK = [
+  'That is the worst answer I have ever heard.',
+  'Bold. Wrong, but bold.',
+  'Interesting theory. The Bible disagrees.',
+  'Did you study, or just hope?',
+  'Close. Not even a little, but close.',
+  'The quizmaster is trying very hard not to laugh.',
+  'Even the Pharisees would have gotten that one.',
+  'Confidence: high. Accuracy: low.',
+  'Matthew called. He wants his chapter back.',
+  'That answer is not in the Bible, and I checked.',
+  'Back to the study sheet with you.',
+  'I admire the enthusiasm.',
+  'Swing and a miss.',
+  'Not quite. Okay, not at all.',
+  'That was a creative answer. Wrong, but creative.',
+  'The Gospel according to guessing is not a book of the Bible.',
+  'Good news: you get another question. Bad news: you get another question.',
+  'Wow. Just wow.',
+  'I have heard better answers from a sleepy donkey.',
+  'Nope. But your volume was excellent.'
+];
+function pickSnark(){
+  let i; do { i = Math.floor(Math.random() * SNARK.length); } while (SNARK.length > 1 && i === S.lastSnark);
+  S.lastSnark = i; return SNARK[i];
+}
 function showResult(){
+  const rec = S.cur.rec, o = rec.outcome;
+  if (o === 'error' && settings.snark && !rec.remark) rec.remark = pickSnark();
   setState('result'); renderScore(); renderResult(); renderResultActions();
-  const o = S.cur.rec.outcome;
   setStatus(o === null ? 'Close call. Make the ruling.' : 'Result below.');
-  if (o === 'correct') speak('Correct.'); else if (o === 'error') speak('Incorrect.');
+  if (o === 'correct') speak('Correct.');
+  else if (o === 'error') speak(rec.remark ? 'Incorrect. ' + rec.remark : 'Incorrect.');
 }
 function outcomeLabel(r){
   return ({ correct: 'Correct', error: 'Error', skipped: 'Skipped' })[r.outcome] || 'Unruled';
@@ -859,6 +889,8 @@ function bindSettings(){
   on(el.setSilence, 'change', () => { settings.silence = Math.min(8, Math.max(1, Number(el.setSilence.value) || 3)); });
   on(el.setShowText, 'change', () => { settings.showText = el.setShowText.checked; syncUI(); });
   on(el.setShuffle, 'change', () => { settings.shuffle = el.setShuffle.checked; });
+  el.setSnark.checked = !!settings.snark;
+  on(el.setSnark, 'change', () => { settings.snark = el.setSnark.checked; });
   el.reloadBtn.addEventListener('click', () => {
     if (S.idx >= 0 && el.summary.hidden && !confirm('Reload now? Your current match will end. Settings are kept.')) return;
     stopRec(); stopSpeaking();
