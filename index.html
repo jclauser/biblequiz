@@ -102,7 +102,7 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
   <header>
     <h1>Quiz Off Trainer</h1>
     <p class="sub">FEC-style Bible quizzing practice: questions read aloud, answers by voice.</p>
-    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 25, 8:30 AM</span></p>
+    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 25, 8:34 AM</span></p>
   </header>
 
   <div id="banner" class="banner" role="alert" hidden></div>
@@ -765,26 +765,26 @@ function renderResultActions(){
 function rule(o){ const rec = S.cur.rec; rec.outcome = o; rec.manual = true; renderScore(); renderResult(); renderResultActions(); }
 function flipRuling(){ const rec = S.cur.rec; rec.outcome = rec.outcome === 'correct' ? 'error' : 'correct'; rec.manual = true; renderScore(); renderResult(); renderResultActions(); }
 const SNARK = [
-  'That is the worst answer I have ever heard.',
-  'Bold. Wrong, but bold.',
-  'Interesting theory. The Bible disagrees.',
-  'Did you study, or just hope?',
-  'Close. Not even a little, but close.',
-  'The quizmaster is trying very hard not to laugh.',
-  'Even the Pharisees would have gotten that one.',
-  'Confidence: high. Accuracy: low.',
-  'Matthew called. He wants his chapter back.',
-  'That answer is not in the Bible, and I checked.',
-  'Back to the study sheet with you.',
-  'I admire the enthusiasm.',
-  'Swing and a miss.',
-  'Not quite. Okay, not at all.',
-  'That was a creative answer. Wrong, but creative.',
-  'The Gospel according to guessing is not a book of the Bible.',
-  'Good news: you get another question. Bad news: you get another question.',
-  'Wow. Just wow.',
-  'I have heard better answers from a sleepy donkey.',
-  'Nope. But your volume was excellent.'
+  'Oops! Not quite, but nice try.',
+  'So close, and yet so far.',
+  'Bold answer! Just not the right one.',
+  'Plot twist: that was not it.',
+  'The quiz gods say try again.',
+  'Not this time, but I like your confidence.',
+  'Matthew is shaking his head, but smiling.',
+  'That one slipped away. Back to the study sheet.',
+  'Great volume. Wrong answer.',
+  'Swing and a miss. You will get the next one.',
+  'Creative answer! Sadly, it is not in the Bible.',
+  'Even the best quizzers miss one now and then.',
+  'Not quite. Your brain needs one more review.',
+  'Nope, but it was fun to hear.',
+  'The quizmaster is rooting for you anyway.',
+  'That was a stretch. Nice reach, though.',
+  'Mistakes are how we learn. Now you know.',
+  'Whoops! Read that verse again later.',
+  'Good try. The answer is in the box below.',
+  'Almost had it. Okay, maybe not, but keep going.'
 ];
 function pickSnark(){
   let i; do { i = Math.floor(Math.random() * SNARK.length); } while (SNARK.length > 1 && i === S.lastSnark);
