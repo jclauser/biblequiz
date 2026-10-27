@@ -102,7 +102,7 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
   <header>
     <h1>Quiz Off Trainer</h1>
     <p class="sub">FEC-style Bible quizzing practice: questions read aloud, answers by voice.</p>
-    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 26, 8:21 PM</span></p>
+    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 26, 9:01 PM</span></p>
   </header>
 
   <div id="banner" class="banner" role="alert" hidden></div>
@@ -765,11 +765,9 @@ function renderResultActions(){
 function rule(o){ const rec = S.cur.rec; rec.outcome = o; rec.manual = true; renderScore(); renderResult(); renderResultActions(); }
 function flipRuling(){ const rec = S.cur.rec; rec.outcome = rec.outcome === 'correct' ? 'error' : 'correct'; rec.manual = true; renderScore(); renderResult(); renderResultActions(); }
 const SNARK = [
-  'Oops! Not quite, but nice try.',
   'So close, and yet so far.',
   'Bold answer! Just not the right one.',
   'Plot twist: that was not it.',
-  'The quiz gods say try again.',
   'Not this time, but I like your confidence.',
   'Matthew is shaking his head, but smiling.',
   'That one slipped away. Back to the study sheet.',
@@ -788,7 +786,6 @@ const SNARK = [
   'That is the worst answer I have ever heard.',
   'Bold. Wrong, but bold.',
   'Even the Pharisees would have gotten that one.',
-  'Matthew called. He wants his chapter back.',
   'I have heard better answers from a sleepy donkey.',
   "Just like your dad's forehand pinch grip for disc golf, your answer is equally as bad.",
   'There are no words to express how wrong that answer is.',
