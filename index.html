@@ -102,7 +102,7 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
   <header>
     <h1>Quiz Off Trainer</h1>
     <p class="sub">FEC-style Bible quizzing practice: questions read aloud, answers by voice.</p>
-    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 25, 8:35 AM</span></p>
+    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 26, 8:21 PM</span></p>
   </header>
 
   <div id="banner" class="banner" role="alert" hidden></div>
@@ -789,7 +789,12 @@ const SNARK = [
   'Bold. Wrong, but bold.',
   'Even the Pharisees would have gotten that one.',
   'Matthew called. He wants his chapter back.',
-  'I have heard better answers from a sleepy donkey.'
+  'I have heard better answers from a sleepy donkey.',
+  "Just like your dad's forehand pinch grip for disc golf, your answer is equally as bad.",
+  'There are no words to express how wrong that answer is.',
+  'You should just stop here and re-read the chapter a few more times, like 10 more....',
+  'You are correct, just kidding, it is so wrong.',
+  'So, you have resorted to completely guessing now?'
 ];
 function pickSnark(){
   let i; do { i = Math.floor(Math.random() * SNARK.length); } while (SNARK.length > 1 && i === S.lastSnark);
