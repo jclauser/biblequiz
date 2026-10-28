@@ -102,7 +102,7 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
   <header>
     <h1>Quiz Off Trainer</h1>
     <p class="sub">FEC-style Bible quizzing practice: questions read aloud, answers by voice.</p>
-    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 26, 9:01 PM</span></p>
+    <p class="sub"><button id="reloadBtn" class="btn" type="button">Reload app (get latest version)</button> <span id="buildInfo">Version: Oct 28, 5:06 PM</span></p>
   </header>
 
   <div id="banner" class="banner" role="alert" hidden></div>
@@ -193,7 +193,7 @@ ul.rules{margin:.4rem 0 0 1.1rem;padding:0}
       <li>Tap Jump to stop the reading, then answer out loud.</li>
       <li>Your answer is submitted after a short pause in your speaking, or when you tap Submit answer.</li>
       <li>Questions are read the FEC way: the question number, then \u201cQuestion.\u201d Each is announced as a regular or reference question (reference questions begin \u201cAccording to \u2026\u201d). The question is read once (use Repeat question for practice).</li>
-      <li>A question that starts with \u201cAccording to\u201d is a reference question; any other direct question is regular. Finish-this-verse is asked two ways: <em>First Words</em> (the first five words are read; finish the verse) or <em>Quote</em> (the reference is read; say the whole verse). Both must be word-perfect.</li>
+      <li>A question that starts with \u201cAccording to\u201d is a reference question; any other direct question is regular. Finish-this-verse is asked two ways: <em>First Words</em> (the first five words are read; finish the verse, or say the whole verse again from the start) or <em>Quote</em> (the reference is read; say the whole verse). Both must be word-perfect.</li>
       <li>Scriptural questions are worded exactly as in Scripture and need the word-perfect answer. Situation questions are announced with the items to give (for example, who said it, to whom) and do not need to be word-perfect.</li>
       <li>Quotations must be verbatim. Extra or wrong words are errors.</li>
       <li>For regular, reference and situation answers, you need most of the key words. Extra words that are not part of the answer count against you: a few make it a close call for you to rule on, and many make it an error.</li>
@@ -319,12 +319,17 @@ function expectedText(q){
 }
 function evaluate(q, heardText){
   if (q.type === 'Quotation' || q.type === 'Completion'){
-    const exp = expectedText(q)[0];
-    const r = evalVerbatim(exp, heardText);
+    let r = evalVerbatim(expectedText(q)[0], heardText), fullVerse = false;
+    if (q.type === 'Completion'){
+      // First-words FTV: finishing the verse OR reciting the whole verse (opening words included) is accepted.
+      const full = evalVerbatim(q.text, heardText);
+      const rank = { correct: 2, unsure: 1, wrong: 0 };
+      if (rank[full.verdict] > rank[r.verdict] || (rank[full.verdict] === rank[r.verdict] && full.sim > r.sim)){ r = full; fullVerse = true; }
+    }
     return {
       verdict: r.verdict, metricLabel: 'Verbatim match', metricValue: Math.round(r.sim * 100),
       expLines: [{ tokens: r.exp, hit: r.expHit }], heardTokens: r.heard, heardHit: r.heardHit, swaps: r.swaps,
-      openingText: q.type === 'Completion' ? splitCompletion(q).opening : ''
+      openingText: q.type === 'Completion' ? splitCompletion(q).opening : '', fullVerse
     };
   }
   const heard = tokenize(heardText);
@@ -740,6 +745,7 @@ function renderResult(){
     out.push(`<div class="cmp"><h3>You said</h3><p>${ev.heardTokens ? tokensHtml(ev.heardTokens, ev.heardHit, 'extra') : esc(rec.heard)}</p></div>`);
     out.push(`<div class="cmp"><h3>Expected</h3>${ev.expLines.map(l => `<p>${tokensHtml(l.tokens, l.hit, 'miss')}</p>`).join('')}</div>`);
     let m = `${esc(ev.metricLabel)}: ${ev.metricValue}%`;
+    if (ev.fullVerse) m += ' · you recited the whole verse, which is accepted';
     if (ev.swaps && ev.swaps.length) m += ' · accepted as recognition variance: ' + ev.swaps.map(s => esc(s[0]) + ' → ' + esc(s[1])).join(', ');
     out.push(`<p class="meta">${m}</p>`);
     if (ev.extras && ev.extras.length) out.push(`<p class="note">Added words that are not part of the answer (highlighted): ${esc(ev.extras.join(', '))}. The FEC rules count incorrect added information against an answer.</p>`);
